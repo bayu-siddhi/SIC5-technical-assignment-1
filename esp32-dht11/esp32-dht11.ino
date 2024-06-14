@@ -1,25 +1,24 @@
-//Libraries
+// Libraries
 #include <DHT.h>
 #include <time.h>
 #include <WiFi.h>
 #include <HTTPClient.h>
 
+// Initialization of DHT22 and HTTP
 #define DHTPIN 19
 #define DHTTYPE DHT11
-
-// Inisialisasi DHT22 dan HTTP
 DHT dht(DHTPIN, DHTTYPE);
 HTTPClient http;
 
-// Server (Ganti ke IP localhost nya)
-const char* postServer = "http://192.168.0.1:5000/sensor/data";
+// Server (Change to your localhost IP)
+const char* postServer = "http://192.168.0.105:5000/sensor/data";
 const char* ntpServer = "pool.ntp.org";
 
-// Wi-Fi (Ganti ssid dan password)
-const char* ssid = "Wokwi-GUEST";
-const char* password = "";
+// Wi-Fi (Change to your SSID and password)
+const char* ssid = "KOS BU MARTA";
+const char* password = "mulyosari19";
 
-// Variabel lain
+// Variables
 float temperature = 0;
 float humidity = 0;
 unsigned long currentMillis = 0; 
@@ -47,7 +46,6 @@ void setupWiFi() {
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
 
-  // Menunggu ESP32 terkoneksi ke WiFI
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
@@ -62,14 +60,13 @@ void setupWiFi() {
 }
 
 void getTime() {
-  time_t now;
   struct tm timeinfo;
-  if (!getLocalTime(&timeinfo)) {
+  if(!getLocalTime(&timeinfo)){
     Serial.println("Failed to obtain time");
     currentMillis = 0;
   }
-  currentMillis = time(&now);
-  if (currentMillis < 1000000000 ) {
+  currentMillis = time(NULL);
+  if(currentMillis < 1000000000 ) {
     currentMillis = 0;
   }
 }
@@ -82,28 +79,34 @@ void getDHTData() {
   if (isnan(temperature) || isnan(humidity)) {
     Serial.println("Failed to read from DHT");
   } else {
-    Serial.println("Temperature: " + String(temperature) + "°C");
-    Serial.println("Humidity: " + String(humidity) + "%");
-    Serial.println("Millis: " + String(currentMillis) + " milliseconds");
+    Serial.print("Temperature: ");
+    Serial.print(temperature);
+    Serial.println(" °C");
+    Serial.print("Humidity: ");
+    Serial.print(humidity);
+    Serial.println(" %");
+    Serial.print("Millis: ");
+    Serial.print(currentMillis);
+    Serial.println(" milliseconds");
   }
 }
 
 void postHTTP() {
   http.begin(postServer);
-  http.addHeader("Content-Type", "Content-Type: application/json"); 
-  jsonData = "{ temperature: " + String(temperature) + ", humidity: " + String(humidity) + ", millis: " + String(currentMillis) + " }";
-  
+  http.addHeader("Content-Type", "application/json");
+  jsonData = "{\"temperature\":\"" + String(temperature) + "\",\"humidity\":\"" + String(humidity) + "\",\"millis\":\"" + String(currentMillis) + "\"}";
+
   httpResponseCode = http.POST(jsonData);
 
-  if(httpResponseCode > 0){
+  if (httpResponseCode > 0) {
     String response = http.getString();
+    Serial.print("HTTP Response code: ");
     Serial.println(httpResponseCode);
     Serial.println(response);
-    Serial.println();
   } else {
-    Serial.print("Error on sending POST: ");
+    Serial.print("Error on HTTP request: ");
     Serial.println(httpResponseCode);
-    Serial.println();
-    http.end();
   }
+
+  http.end();
 }
