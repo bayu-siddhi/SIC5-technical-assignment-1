@@ -18,9 +18,9 @@ date_format = os.getenv('DATE_FORMAT')
 def sensor_data():
   # Get the data from the request
   data = request.get_json()
-  temperature = data['temperature']
-  humidity = data['humidity']
-  millis = data['millis']
+  temperature = float(data['temperature'])
+  humidity = float(data['humidity'])
+  millis = float(data['millis'])
 
   # Change millis to local datetime
   timestamp = datetime.datetime.fromtimestamp(millis, tz=timezone)
@@ -28,7 +28,7 @@ def sensor_data():
 
   # Add and save the sensor data
   df.loc[len(df)] = [temperature, humidity, timestamp]
-  df.to_csv('tmp_data.csv', index=False)
+  df.to_csv(os.getenv('CSV_DATA'), index=False)
 
   # Send response
   response = {'message': 'Data received successfully!'}
@@ -43,4 +43,4 @@ def get_sensor_data():
   return jsonify(json_data)
 
 if __name__ == '__main__':
-  app.run(debug=True)
+  app.run(host='0.0.0.0', port=5000)
